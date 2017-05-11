@@ -19,7 +19,7 @@ import android.view.View;
  */
 
 public class FancyWatchView extends View{
-    private int mRotation = -90;
+    private float mRotation = -90;
     public FancyWatchView(Context context) {
         super(context);
     }
@@ -32,11 +32,11 @@ public class FancyWatchView extends View{
         super(context, attrs, defStyleAttr);
     }
 
-    public void setmRotation(int rotation){
+    public void setmRotation(float rotation){
         mRotation = rotation;
         invalidate();
     }
-    public int getmRotation(){
+    public float getmRotation(){
         return mRotation;
     }
 
@@ -55,20 +55,18 @@ public class FancyWatchView extends View{
             canvas.rotate(30);
         }
 
-
-
         canvas.drawCircle(0,0,60,hardWare);
         hardWare.setStyle(Paint.Style.STROKE);
         hardWare.setStrokeWidth(10);
         canvas.drawCircle(0,0,140,hardWare);
 
 
-        //draw hour hand and minut hand
+        //draw hour hand and minute hand
         Paint gradientPaint = new Paint();
-        int[] mColors = new int[] {//渐变色数组
-                0xFFFF0000, 0xFFFF00FF, 0xFF0000FF, 0xFF00FFFF, 0xFF00FF00,
-                0xFFFFFF00, 0xFFFF0000
-        };
+//        int[] mColors = new int[] {//渐变色数组
+//                0xFFFF0000, 0xFFFF00FF, 0xFF0000FF, 0xFF00FFFF, 0xFF00FF00,
+//                0xFFFFFF00, 0xFFFF0000
+//        };
 
         int[] mYColors = new int[]{
                 0x00DED34C,  0xAFDED34C
@@ -106,22 +104,15 @@ public class FancyWatchView extends View{
 //        canvas.drawLine(50,0,150,0,linePaint);
 
         canvas.restore();
+
         canvas.rotate(mRotation);
         gradientPaint.setShader(sweepGradient);
         canvas.drawPath(circlePath,gradientPaint);
         linePaint.setColor(Color.parseColor("#DED34C"));
         canvas.drawLine(60,0,140,0,linePaint);
 
-
-
-//        gradientDrawable.draw(canvas);
-//
-//            Matrix matrix = new Matrix();
-//            canvas.drawBitmap(bitmap, matrix, gradientPaint);
-
         canvas.save();
 
-//        bitmap.recycle();
     }
 
     PointF startPoint;
@@ -152,77 +143,26 @@ public class FancyWatchView extends View{
 
     private void calculateAngle() {
         PointF centerPoint = new PointF(200,200);
-
         PointF vectorStart = new PointF(startPoint.x-centerPoint.x, startPoint.y - centerPoint.y);
         PointF vectorMove = new PointF(movePoint.x-centerPoint.x, movePoint.y-centerPoint.y);
 
-        int deltaDegree = 0;
-        //check same area
-        if(checkSameArea(vectorMove,vectorStart)){
-            switch (checkArea(vectorMove)){
-                case 1:
-                    if((vectorMove.x/getVectorScale(vectorMove)-vectorStart.x/getVectorScale(vectorStart))>0){
-                        deltaDegree = 1;
-                    }else {
-                        deltaDegree = -1;
-                    }
-                    break;
-                case 2:
-                    if((vectorMove.x/getVectorScale(vectorMove)-vectorStart.x/getVectorScale(vectorStart))<0){
-                        deltaDegree = 1;
-                    }else {
-                        deltaDegree = -1;
-                    }
-                    break;
-                case 3:
-                    if((vectorMove.x/getVectorScale(vectorMove)-vectorStart.x/getVectorScale(vectorStart))<0){
-                        deltaDegree = 1;
-                    }else {
-                        deltaDegree = -1;
-                    }
-                    break;
-                case 4:
-                    if((vectorMove.x/getVectorScale(vectorMove)-vectorStart.x/getVectorScale(vectorStart))>0){
-                        deltaDegree = 1;
-                    }else {
-                        deltaDegree = -1;
-                    }
-                    break;
-            }
-        }
-        //  (movePoint.x-centerPoint.x, movePoint.y-centerPoint.y)^2-(startPoint.x-centerPoint.x, startPoint.y-centerPoint.y)^2
-//        float a = (movePoint.x-centerPoint.x)*(startPoint.x-centerPoint.x)+(movePoint.y-centerPoint.y)*(startPoint.y-centerPoint.y);
-//        double b = Math.sqrt((movePoint.x-centerPoint.x)*(movePoint.x-centerPoint.x)+(movePoint.y-centerPoint.y)*(movePoint.y-centerPoint.y))*Math.sqrt((startPoint.x-centerPoint.x)*(startPoint.x-centerPoint.x)+(startPoint.y-centerPoint.y)*(startPoint.y-centerPoint.y));
-        Log.d("math", deltaDegree+"");
-        int mRotation = getmRotation();
-        setmRotation((-deltaDegree)*1+mRotation);
+        float mRotation = getmRotation();
+        double k1 = caculateK(vectorStart);
+        double k2 = caculateK(vectorMove);
+        double tan = (k1-k2)/(1+k1*k2);
+//        Log.d("tan", tan+"");
+        double degree = Math.toDegrees(tan);
+//        Log.d("degree", degree+"");
+        setmRotation(mRotation-(float)degree);
     }
 
-    private float getVectorScale(PointF vector) {
-        return (float) Math.sqrt(vector.x*vector.x+vector.y*vector.y);
-
+    private double caculateK(PointF vector) {
+        double k = vector.y/vector.x;
+        return k;
     }
 
-    private int checkArea(PointF vectorMove) {
-        if(vectorMove.x>0){
-            if(vectorMove.y>0){
-                return 1;
-            }else {
-                return 2;
-            }
-        }else {
-            if(vectorMove.y>0){
-                return 4;
-            }else {
-                return 3;
-            }
-        }
-    }
 
-    private boolean checkSameArea(PointF vectorMove, PointF vectorStart) {
-        if(vectorMove.x*vectorStart.x>0&&vectorMove.y*vectorStart.y>0){
-            return true;
-        }
-        return false;
-    }
+    //set color
+    //add countDown
+    
 }
